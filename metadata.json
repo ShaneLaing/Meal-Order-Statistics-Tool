@@ -1,0 +1,5 @@
+{
+  "name": "訂餐統計系統",
+  "description": "基於 Material Design 3 的訂餐統計與管理系統，支援多人點餐與金額加總。",
+  "requestFramePermissions": []
+}

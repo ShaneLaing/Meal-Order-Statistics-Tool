@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>訂餐統計系統 - 現代化改版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --primary-color: #5b58ff;
+            --primary-light: #eef2ff;
+            --bg-color: #f4f7fe;
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-gray: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --success-light: #d1fae5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 40px;
+        }
+
+        .logo i {
+            color: var(--primary-color);
+            font-size: 28px;
+        }
+
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: var(--text-gray);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .nav-item i {
+            font-size: 20px;
+        }
+
+        /* Main Content Styling */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            height: 80px;
+            padding: 0 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .search-bar {
+            background-color: var(--card-bg);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 300px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+
+        .search-bar input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+
+
+        .icon-btn {
+            background: var(--card-bg);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-gray);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+
+        /* Dashboard Content */
+        .dashboard-container {
+            padding: 20px 40px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Top Banner Card */
+        .summary-banner {
+            background: linear-gradient(135deg, #f0f3ff 0%, #e0e8ff 100%);
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(91, 88, 255, 0.05);
+        }
+
+        .summary-info h2 {
+            font-size: 16px;
+            color: var(--text-gray);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .summary-info .total-price {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .summary-cards {
+            display: flex;
+            gap: 16px;
+        }
+
+        .mini-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 16px 24px;
+            border-radius: 16px;
+            min-width: 120px;
+        }
+
+        .mini-card span { font-size: 13px; color: var(--text-gray); }
+        .mini-card h3 { font-size: 20px; margin-top: 4px; }
+
+        /* Main Layout Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+        }
+
+        /* Cards Generic Style */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Order List (Left Column) */
+        .order-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .order-item {
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+
+        .order-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(91, 88, 255, 0.08);
+        }
+
+        .order-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-name { font-weight: 600; }
+        .order-badge {
+            background: var(--success-light);
+            color: var(--success);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .action-btns i {
+            color: var(--text-gray);
+            cursor: pointer;
+            margin-left: 8px;
+            transition: color 0.2s;
+        }
+
+        .action-btns i:hover { color: var(--primary-color); }
+
+        .order-details {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-gray);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        /* Form Styling (Right Column) */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-gray);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 14px;
+            color: var(--text-dark);
+            outline: none;
+            transition: all 0.2s;
+            background-color: #f8fafc;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            background-color: #fff;
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+
+        /* Quantity Control */
+        .qty-control {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: max-content;
+            padding: 4px;
+        }
+
+        .qty-btn {
+            background: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dark);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .qty-input {
+            width: 40px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            margin-bottom: 24px;
+        }
+
+        .btn-secondary:hover { background-color: #e0e7ff; }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(91, 88, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(91, 88, 255, 0.4);
+        }
+
+        /* Cart Area */
+        .cart-area {
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .empty-cart {
+            color: var(--text-gray);
+            font-size: 14px;
+            text-align: center;
+            padding: 20px 0;
+            font-style: italic;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .total-row .amount {
+            color: var(--primary-color);
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="search-bar">
+                <i class="ph ph-magnifying-glass" style="color: var(--text-gray)"></i>
+                <input type="text" placeholder="搜尋訂單或姓名...">
+            </div>
+        </header>
+
+        <div class="dashboard-container">
+            
+            <div class="summary-banner">
+                <div class="summary-info">
+                    <h2>今日訂餐總計 (Sales Distribution)</h2>
+                    <div class="total-price">$555.00</div>
+                </div>
+                <div class="summary-cards">
+                    <div class="mini-card">
+                        <span>總訂單數</span>
+                        <h3>15 筆</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">所有人的訂單們</div>
+                        <i class="ph ph-dots-three" style="font-size: 24px; color: var(--text-gray); cursor: pointer;"></i>
+                    </div>
+                    
+                    <div class="order-list">
+                        <div class="order-item">
+                            <div class="order-item-header">
+                                <div class="user-info">
+                                    <div class="avatar">潘</div>
+                                    <span class="user-name">潘柏丰</span>
+                                    <span class="order-badge">$28</span>
+                                </div>
+                                <div class="action-btns">
+                                    <i class="ph ph-pencil-simple"></i>
+                                    <i class="ph ph-trash"></i>
+                                </div>
+                            </div>
+                            <div class="order-details">
+                                <span>高麗菜包 × 1</span>
+                                <span>$28</span>
+                            </div>
+                        </div>
+
+                        <div class="order-item">
+                            <div class="order-item-header">
+                                <div class="user-info">
+                                    <div class="avatar" style="background: #fff1f2; color: #e11d48;">游</div>
+                                    <span class="user-name">游宗穎</span>
+                                    <span class="order-badge">$28</span>
+                                </div>
+                                <div class="action-btns">
+                                    <i class="ph ph-pencil-simple"></i>
+                                    <i class="ph ph-trash"></i>
+                                </div>
+                            </div>
+                            <div class="order-details">
+                                <span>高麗菜包 × 1</span>
+                                <span>$28</span>
+                            </div>
+                        </div>
+
+                        <div class="order-item">
+                            <div class="order-item-header">
+                                <div class="user-info">
+                                    <div class="avatar" style="background: #fef3c7; color: #d97706;">潘</div>
+                                    <span class="user-name">潘葉安</span>
+                                    <span class="order-badge">$59</span>
+                                </div>
+                                <div class="action-btns">
+                                    <i class="ph ph-pencil-simple"></i>
+                                    <i class="ph ph-trash"></i>
+                                </div>
+                            </div>
+                            <div class="order-details">
+                                <span>竹筍包 × 1</span>
+                                <span>$31</span>
+                            </div>
+                            <div class="order-details">
+                                <span>高麗菜包 × 1</span>
+                                <span>$28</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">新增個人訂單</div>
+                    </div>
+
+                    <form onsubmit="event.preventDefault();">
+                        <div class="form-group">
+                            <label class="form-label">您的姓名</label>
+                            <input type="text" class="form-control" placeholder="請輸入姓名">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">選擇餐點</label>
+                            <select class="form-control">
+                                <option value="" disabled selected>請選擇餐點...</option>
+                                <option value="1">高麗菜包 - $28</option>
+                                <option value="2">竹筍包 - $31</option>
+                                <option value="3">香菇菜脯包 - $30</option>
+                                <option value="4">堅果饅頭 - $37</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">數量</label>
+                            <div class="qty-control">
+                                <button type="button" class="qty-btn"><i class="ph ph-minus"></i></button>
+                                <input type="text" class="qty-input" value="1" readonly>
+                                <button type="button" class="qty-btn"><i class="ph ph-plus"></i></button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-secondary">
+                            <i class="ph ph-plus"></i> 加入個人清單
+                        </button>
+
+                        <div class="cart-area">
+                            <label class="form-label">目前已選餐點：</label>
+                            <div class="empty-cart">尚未加入任何餐點</div>
+                            
+                            <div class="total-row">
+                                <span>您的總價</span>
+                                <span class="amount">$0</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ph ph-paper-plane-tilt"></i> 送出訂單
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

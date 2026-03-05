@@ -70,6 +70,8 @@ export default function App() {
 
   // --- Global State (Section A) ---
   const [allUsersOrders, setAllUsersOrders] = useState<UserOrder[]>([]);
+  const [orderSearchKeyword, setOrderSearchKeyword] = useState('');
+  const [isExportVisible, setIsExportVisible] = useState(false);
 
   // --- Fetch Menu & Orders ---
   useEffect(() => {
@@ -115,6 +117,28 @@ export default function App() {
   const grandTotalPrice = useMemo(() => {
     return allUsersOrders.reduce((sum, order) => sum + order.total_price, 0);
   }, [allUsersOrders]);
+
+  const filteredOrders = useMemo(() => {
+    const keyword = orderSearchKeyword.trim().toLowerCase();
+    if (!keyword) return allUsersOrders;
+    return allUsersOrders.filter(order => order.filler_name.toLowerCase().includes(keyword));
+  }, [allUsersOrders, orderSearchKeyword]);
+
+  const lineExportText = useMemo(() => {
+    const lines = ['名字/餐點/價格'];
+
+    filteredOrders.forEach(order => {
+      if (order.items && order.items.length > 0) {
+        order.items.forEach(item => {
+          lines.push(`${order.filler_name}/${item.meal.name} × ${item.quantity}/${item.subtotal}`);
+        });
+      } else {
+        lines.push(`${order.filler_name}/無餐點明細/${order.total_price}`);
+      }
+    });
+
+    return lines.join('\n');
+  }, [filteredOrders]);
 
   // --- Draft State (Section B) ---
   const [fillerName, setFillerName] = useState('');
@@ -274,89 +298,125 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FEF7FF] text-[#1D1B20] p-4 md:p-8 font-sans">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-normal tracking-tight text-[#1D1B20]">訂餐統計系統</h1>
+    <div className="min-h-screen bg-[#f4f7fe] text-[#1e293b]">
+      <main className="min-h-screen overflow-y-auto">
+        <header className="h-20 px-4 md:px-10 flex items-center justify-between sticky top-0 z-10 bg-[#f4f7fe]/90 backdrop-blur">
+          <h1 className="text-xl md:text-2xl font-bold">訂餐統計系統</h1>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-
-          {/* Section A: Global Summary (Secondary Color Scheme - M3 Green) */}
-          <section className="bg-secondary-container rounded-[28px] p-6 md:p-8 shadow-sm h-fit border border-secondary/10">
-            <div
-              className="flex justify-between items-center mb-6 cursor-pointer select-none"
-              onClick={() => setIsGlobalListExpanded(!isGlobalListExpanded)}
-            >
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-medium text-[#1D1B20]">所有人的訂單們</h2>
-                <span className="text-sm font-medium text-white bg-secondary px-3 py-1 rounded-full shadow-sm">
-                  總計: ${grandTotalPrice}
-                </span>
+        <div className="px-4 md:px-10 pb-10 pt-4 md:pt-6 space-y-6">
+          <section className="rounded-[20px] p-5 md:p-8 bg-[linear-gradient(135deg,#f0f3ff_0%,#e0e8ff_100%)] shadow-[0_4px_15px_rgba(91,88,255,0.05)] flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-sm md:text-base text-[#64748b] font-medium mb-1">今日訂餐總計 (Sales Distribution)</h2>
+              <div className="text-3xl md:text-4xl font-bold text-[#1e293b]">${grandTotalPrice.toFixed(2)}</div>
+            </div>
+            <div className="flex gap-3 items-stretch">
+              <div className="bg-white/80 backdrop-blur rounded-2xl px-4 py-3 min-w-[120px]">
+                <span className="text-xs text-[#64748b]">總訂單數</span>
+                <h3 className="text-xl font-bold text-[#1e293b] mt-1">{allUsersOrders.length} 筆</h3>
               </div>
-              <button className="p-1 rounded-full text-[#49454F] hover:bg-[#1D1B20]/8 transition-colors">
-                {isGlobalListExpanded ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+              <button
+                onClick={() => setIsExportVisible(v => !v)}
+                className="rounded-2xl px-4 py-3 min-w-[120px] bg-[#5b58ff] text-white font-semibold text-sm shadow-[0_4px_12px_rgba(91,88,255,0.3)] hover:brightness-110 transition-all"
+              >
+                匯出訂單
               </button>
             </div>
+          </section>
 
-            {isGlobalListExpanded && (
-              <div className="flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="overflow-y-auto pr-2 space-y-4 max-h-[600px]">
+          {isExportVisible && (
+            <section className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#e2e8f0]">
+              <h3 className="text-base font-semibold mb-3 text-[#1e293b]">LINE text block</h3>
+              <textarea
+                readOnly
+                value={lineExportText}
+                className="w-full min-h-[180px] rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-3 text-sm text-[#334155] outline-none"
+              />
+            </section>
+          )}
+
+          <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6 items-start">
+            <section className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-lg font-semibold">所有人的訂單們</h2>
+                <button
+                  className="p-2 rounded-full text-[#64748b] hover:bg-[#eef2ff] hover:text-[#5b58ff] transition-colors"
+                  onClick={() => setIsGlobalListExpanded(!isGlobalListExpanded)}
+                >
+                  {isGlobalListExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </button>
+              </div>
+
+              <div className="w-full mb-5 bg-[#f8fafc] px-4 py-2.5 rounded-full border border-[#e2e8f0] flex items-center gap-2">
+                <ChevronDown size={16} className="text-[#64748b] -rotate-90" />
+                <input
+                  type="text"
+                  value={orderSearchKeyword}
+                  onChange={(e) => setOrderSearchKeyword(e.target.value)}
+                  placeholder="搜尋訂單或姓名..."
+                  className="w-full bg-transparent outline-none text-sm text-[#1e293b] placeholder:text-[#94a3b8]"
+                />
+              </div>
+
+              {isGlobalListExpanded && (
+                <div className="space-y-4 max-h-[640px] overflow-y-auto pr-1">
                   {isLoadingMenu ? (
-                    <div className="text-[#49454F] p-4 text-center bg-secondary-surface rounded-2xl border border-secondary/10 flex flex-col items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-secondary border-t-transparent rounded-full animate-spin"></div>
+                    <div className="p-5 text-center rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] text-[#64748b] flex flex-col items-center gap-2">
+                      <LoadingSpinner size={20} className="text-[#5b58ff]" />
                       <span>正在同步雲端資料...</span>
                     </div>
-                  ) : allUsersOrders.length === 0 ? (
-                    <div className="text-[#49454F] italic p-4 text-center bg-secondary-surface rounded-2xl border border-secondary/10">
-                      目前還沒有人點餐喔！
+                  ) : filteredOrders.length === 0 ? (
+                    <div className="p-5 text-center rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] text-[#64748b] italic">
+                      {orderSearchKeyword.trim() ? '找不到符合的姓名' : '目前還沒有人點餐喔！'}
                     </div>
                   ) : (
-                    allUsersOrders.map(order => (
-                      <div key={order.id} className={`bg-secondary-surface rounded-2xl p-4 shadow-sm border border-outline-variant relative transition-opacity ${deletingId === order.id ? 'opacity-50 pointer-events-none' : ''}`}>
+                    filteredOrders.map(order => (
+                      <div key={order.id} className={`relative rounded-2xl border border-[#e2e8f0] p-4 transition-all hover:border-[#5b58ff] hover:shadow-[0_4px_12px_rgba(91,88,255,0.08)] ${deletingId === order.id ? 'opacity-50 pointer-events-none' : ''}`}>
                         {deletingId === order.id && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-white/20 rounded-2xl z-20">
+                          <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-white/70 z-20">
                             <div className="flex flex-col items-center gap-2">
-                              <LoadingSpinner size={24} className="text-secondary" />
-                              <span className="text-xs font-medium text-secondary">同步刪除中...</span>
+                              <LoadingSpinner size={22} className="text-[#5b58ff]" />
+                              <span className="text-xs font-medium text-[#5b58ff]">同步刪除中...</span>
                             </div>
                           </div>
                         )}
-                        <div className="flex justify-between items-start mb-3">
+
+                        <div className="flex justify-between items-start mb-3 pb-3 border-b border-dashed border-[#e2e8f0]">
                           <div className="flex items-center gap-3">
-                            <h3 className="text-base font-medium text-[#1D1B20]">{order.filler_name}</h3>
-                            <span className="text-sm font-medium text-secondary bg-secondary-stepper px-2 py-0.5 rounded-md">
-                              ${order.total_price}
-                            </span>
+                            <div className="w-8 h-8 rounded-full bg-[#eef2ff] text-[#5b58ff] flex items-center justify-center text-sm font-semibold">
+                              {order.filler_name?.slice(0, 1) || '人'}
+                            </div>
+                            <span className="font-semibold text-[#1e293b]">{order.filler_name}</span>
+                            <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#d1fae5] text-[#10b981]">${order.total_price}</span>
                           </div>
-                          <div className="flex gap-1 -mt-1 -mr-1">
+                          <div className="flex items-center gap-1">
                             <button
                               onClick={() => setEditingOrder(order)}
-                              className="p-2 rounded-full hover:bg-black/5 text-[#49454F] hover:text-secondary transition-colors"
+                              className="p-2 rounded-full text-[#64748b] hover:bg-[#eef2ff] hover:text-[#5b58ff] transition-colors"
                               aria-label="編輯訂單"
                             >
-                              <Edit size={18} />
+                              <Edit size={16} />
                             </button>
                             <button
                               onClick={() => handleDeleteOrder(order.id)}
-                              className="p-2 rounded-full hover:bg-[#BA1A1A]/8 text-[#49454F] hover:text-[#BA1A1A] transition-colors"
+                              className="p-2 rounded-full text-[#64748b] hover:bg-[#fee2e2] hover:text-[#dc2626] transition-colors"
                               aria-label="刪除訂單"
                             >
-                              <Trash2 size={18} />
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-1">
+                        <div className="space-y-1">
                           {order.items.length > 0 ? (
                             order.items.map(item => (
-                              <div key={item.id} className="text-sm text-[#49454F] flex justify-between">
-                                <span>{item.meal.name} <span className="text-[#79747E]">× {item.quantity}</span></span>
+                              <div key={item.id} className="text-sm text-[#64748b] flex justify-between">
+                                <span>{item.meal.name} × {item.quantity}</span>
                                 <span>${item.subtotal}</span>
                               </div>
                             ))
                           ) : (
-                            <div className="text-sm text-[#49454F] whitespace-pre-wrap">
+                            <div className="text-sm text-[#64748b] whitespace-pre-wrap">
                               {/* @ts-ignore */}
                               {order._summary || '無餐點明細'}
                             </div>
@@ -366,21 +426,17 @@ export default function App() {
                     ))
                   )}
                 </div>
+              )}
+            </section>
+
+            <section className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+              <div className="mb-5">
+                <h2 className="text-lg font-semibold">新增個人訂單</h2>
               </div>
-            )}
-          </section>
 
-          {/* Divider for mobile */}
-          <div className="hidden max-lg:block h-[2px] bg-[#CAC4D0] my-2 w-full"></div>
-
-          {/* Section B: Filler Input (Primary Color Scheme - M3 Purple) */}
-          <section className="bg-primary-container rounded-[28px] p-6 md:p-8 shadow-sm h-fit border border-primary/10">
-            <h2 className="text-xl font-medium mb-6 text-[#1D1B20]">新增個人訂單</h2>
-
-            <div className="space-y-6">
-              {/* Name Input */}
-              <div className="space-y-1">
-                <div className="relative">
+              <div className="space-y-5">
+                <div>
+                  <label htmlFor="filler_name" className="block text-sm font-medium text-[#64748b] mb-2">您的姓名</label>
                   <input
                     type="text"
                     id="filler_name"
@@ -389,152 +445,128 @@ export default function App() {
                       setFillerName(e.target.value);
                       if (e.target.value.trim()) setFillerNameError(false);
                     }}
-                    className={`block w-full px-4 py-3.5 text-base text-[#1D1B20] bg-transparent border ${fillerNameError ? 'border-[#BA1A1A] focus:ring-[#BA1A1A]' : 'border-primary-border focus:ring-primary'} rounded-[4px] appearance-none focus:outline-none focus:ring-2 focus:border-transparent peer`}
-                    placeholder=" "
+                    className={`w-full px-4 py-3.5 rounded-xl border text-sm bg-[#f8fafc] outline-none transition-all ${fillerNameError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[#e2e8f0] focus:border-[#5b58ff] focus:ring-4 focus:ring-[#eef2ff]'}`}
+                    placeholder="請輸入姓名"
                   />
-                  <label
-                    htmlFor="filler_name"
-                    className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-primary-container px-2 peer-focus:px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 left-3 pointer-events-none 
-                      ${fillerNameError ? 'text-[#BA1A1A] peer-focus:text-[#BA1A1A]' : 'text-[#49454F] peer-focus:text-primary'}`}
-                  >
-                    您的姓名
-                  </label>
+                  {fillerNameError && <span className="text-xs text-[#dc2626] mt-1 block">請填寫姓名</span>}
                 </div>
-                {fillerNameError && (
-                  <span className="text-xs text-[#BA1A1A] ml-1 block">請填寫姓名</span>
-                )}
-              </div>
 
-              {/* Meal Selector */}
-              <div className="space-y-1">
-                <div className="relative">
-                  <select
-                    id="meal_selector"
-                    value={selectedMealId}
-                    onChange={(e) => {
-                      setSelectedMealId(e.target.value);
-                      if (e.target.value) setSelectedMealError(false);
-                    }}
-                    disabled={isLoadingMenu}
-                    className={`block w-full px-4 py-3.5 text-base text-[#1D1B20] bg-transparent border ${selectedMealError ? 'border-[#BA1A1A] focus:ring-[#BA1A1A]' : 'border-primary-border focus:ring-primary'} rounded-[4px] appearance-none focus:outline-none focus:ring-2 focus:border-transparent peer disabled:opacity-50 disabled:bg-gray-50 font-mono`}
-                  >
-                    {isLoadingMenu ? (
-                      <option className="bg-primary-surface font-sans">正在同步餐點清單...</option>
-                    ) : (
-                      <>
-                        <option value="" disabled className="bg-primary-surface font-sans">請選擇餐點</option>
-                        {globalMeals.map(meal => (
-                          <option key={meal.id} value={meal.id} className="bg-primary-surface">
-                            {padMealName(meal.name)} ${String(meal.price).padStart(3, '\u00A0')}
-                          </option>
-                        ))}
-                      </>
-                    )}
-                  </select>
-                  <label
-                    htmlFor="meal_selector"
-                    className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-primary-container px-2 peer-focus:px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 left-3 pointer-events-none
-                      ${selectedMealError ? 'text-[#BA1A1A] peer-focus:text-[#BA1A1A]' : 'text-[#49454F] peer-focus:text-primary'}`}
-                  >
-                    選擇餐點
-                  </label>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#49454F]">
-                    <ChevronDown size={20} />
+                <div>
+                  <label htmlFor="meal_selector" className="block text-sm font-medium text-[#64748b] mb-2">選擇餐點</label>
+                  <div className="relative">
+                    <select
+                      id="meal_selector"
+                      value={selectedMealId}
+                      onChange={(e) => {
+                        setSelectedMealId(e.target.value);
+                        if (e.target.value) setSelectedMealError(false);
+                      }}
+                      disabled={isLoadingMenu}
+                      className={`w-full px-4 py-3.5 rounded-xl border text-sm bg-[#f8fafc] outline-none transition-all appearance-none font-mono disabled:opacity-60 ${selectedMealError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[#e2e8f0] focus:border-[#5b58ff] focus:ring-4 focus:ring-[#eef2ff]'}`}
+                    >
+                      {isLoadingMenu ? (
+                        <option className="font-sans">正在同步餐點清單...</option>
+                      ) : (
+                        <>
+                          <option value="" disabled className="font-sans">請選擇餐點...</option>
+                          {globalMeals.map(meal => (
+                            <option key={meal.id} value={meal.id}>
+                              {padMealName(meal.name)} ${String(meal.price).padStart(3, '\u00A0')}
+                            </option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748b] pointer-events-none">
+                      <ChevronDown size={18} />
+                    </div>
+                  </div>
+                  {selectedMealError && <span className="text-xs text-[#dc2626] mt-1 block">請選擇餐點</span>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#64748b] mb-2">數量</label>
+                  <div className="inline-flex items-center bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-1">
+                    <button
+                      onClick={() => currentQuantity > 1 && setCurrentQuantity(q => q - 1)}
+                      disabled={currentQuantity <= 1}
+                      className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#1e293b] disabled:opacity-50"
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <span className="w-10 text-center font-semibold">{currentQuantity}</span>
+                    <button
+                      onClick={() => setCurrentQuantity(q => q + 1)}
+                      className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#1e293b]"
+                    >
+                      <Plus size={16} />
+                    </button>
                   </div>
                 </div>
-                {selectedMealError && (
-                  <span className="text-xs text-[#BA1A1A] ml-1 block">請選擇餐點</span>
-                )}
-              </div>
 
-              {/* Quantity Stepper */}
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-[#49454F]">數量</span>
-                <div className="flex items-center bg-primary-stepper rounded-full">
-                  <button
-                    onClick={() => currentQuantity > 1 && setCurrentQuantity(q => q - 1)}
-                    disabled={currentQuantity <= 1}
-                    className="p-2 rounded-full text-[#1D1B20] hover:bg-black/5 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
-                  >
-                    <Minus size={20} />
-                  </button>
-                  <span className="text-xl w-12 text-center font-normal text-[#1D1B20]">{currentQuantity}</span>
-                  <button
-                    onClick={() => setCurrentQuantity(q => q + 1)}
-                    className="p-2 rounded-full text-[#1D1B20] hover:bg-black/5 transition-colors"
-                  >
-                    <Plus size={20} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Add to Draft Button */}
-              <button
-                onClick={handleAddToDraft}
-                disabled={!selectedMeal || currentQuantity <= 0}
-                className="relative z-10 w-full bg-primary-variant text-white rounded-full px-6 py-2.5 font-medium flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 active:opacity-80 transition-all disabled:opacity-50"
-              >
-                <Plus size={20} />
-                加入個人清單
-              </button>
-
-              {/* Draft Summary */}
-              <div className="mt-8 pt-6 border-t border-outline-variant">
-                <h3 className="text-sm font-medium text-[#49454F] mb-3">目前已選餐點：</h3>
-
-                <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
-                  {fillerDraftList.length === 0 ? (
-                    <p className="text-sm text-[#79747E] italic">尚未加入任何餐點</p>
-                  ) : (
-                    fillerDraftList.map(item => (
-                      <div key={item.id} className="flex justify-between items-center bg-primary-container-low p-3 rounded-xl border border-outline-variant">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-[#1D1B20]">{item.meal.name}</span>
-                          <span className="text-xs text-[#49454F]">${item.meal.price} × {item.quantity}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium text-[#1D1B20]">${item.subtotal}</span>
-                          <button
-                            onClick={() => handleRemoveFromDraft(item.id)}
-                            className="p-1.5 rounded-full text-[#BA1A1A] hover:bg-[#BA1A1A]/8 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="flex justify-end mb-6">
-                  <h4 className="text-base font-medium text-[#1D1B20]">
-                    您的總價：<span className="text-primary font-bold">${fillerTotalPrice}</span>
-                  </h4>
-                </div>
-
-                {/* Submit Button */}
                 <button
-                  onClick={handleSubmitOrder}
-                  disabled={isSubmitting}
-                  className="relative z-10 w-full bg-primary text-white rounded-full px-6 py-3 font-medium flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 active:opacity-80 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
+                  onClick={handleAddToDraft}
+                  disabled={!selectedMeal || currentQuantity <= 0}
+                  className="w-full px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 bg-[#eef2ff] text-[#5b58ff] hover:bg-[#e0e7ff] transition-colors disabled:opacity-50"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <LoadingSpinner size={20} />
-                      正在送出...
-                    </>
-                  ) : (
-                    <>
-                      <CloudUpload size={20} />
-                      送出訂單
-                    </>
-                  )}
+                  <Plus size={18} />
+                  加入個人清單
                 </button>
+
+                <div className="pt-5 border-t border-[#e2e8f0]">
+                  <label className="block text-sm font-medium text-[#64748b] mb-3">目前已選餐點：</label>
+                  <div className="space-y-2 mb-4 max-h-52 overflow-y-auto">
+                    {fillerDraftList.length === 0 ? (
+                      <div className="text-[#64748b] text-sm italic text-center py-4">尚未加入任何餐點</div>
+                    ) : (
+                      fillerDraftList.map(item => (
+                        <div key={item.id} className="flex items-center justify-between p-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc]">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-[#1e293b]">{item.meal.name}</span>
+                            <span className="text-xs text-[#64748b]">${item.meal.price} × {item.quantity}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-[#1e293b]">${item.subtotal}</span>
+                            <button
+                              onClick={() => handleRemoveFromDraft(item.id)}
+                              className="p-1.5 rounded-full text-[#dc2626] hover:bg-[#fee2e2] transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="flex justify-between items-center mb-5 text-lg font-bold">
+                    <span>您的總價</span>
+                    <span className="text-[#5b58ff] text-2xl">${fillerTotalPrice}</span>
+                  </div>
+
+                  <button
+                    onClick={handleSubmitOrder}
+                    disabled={isSubmitting}
+                    className="w-full bg-[#5b58ff] text-white rounded-xl px-4 py-3.5 font-semibold flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(91,88,255,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(91,88,255,0.4)] transition-all disabled:bg-gray-300 disabled:shadow-none disabled:translate-y-0"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <LoadingSpinner size={18} />
+                        正在送出...
+                      </>
+                    ) : (
+                      <>
+                        <CloudUpload size={18} />
+                        送出訂單
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </div>
         </div>
-      </div>
+      </main>
 
       {/* Edit Dialog */}
       {editingOrder && (
@@ -609,9 +641,9 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-primary-surface rounded-[28px] w-full max-w-md flex flex-col max-h-[90vh] shadow-xl">
-        <div className="p-6 pb-4 border-b border-outline-variant">
-          <h2 className="text-2xl font-normal text-[#1D1B20]">編輯訂單</h2>
+      <div className="bg-white rounded-[20px] w-full max-w-md flex flex-col max-h-[90vh] shadow-[0_12px_40px_rgba(15,23,42,0.2)]">
+        <div className="p-6 pb-4 border-b border-[#e2e8f0]">
+          <h2 className="text-2xl font-semibold text-[#1e293b]">編輯訂單</h2>
         </div>
 
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
@@ -626,25 +658,19 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
                   setName(e.target.value);
                   if (e.target.value.trim()) setNameError(false);
                 }}
-                className={`block w-full px-4 py-3.5 text-base text-[#1D1B20] bg-transparent border ${nameError ? 'border-[#BA1A1A] focus:ring-[#BA1A1A]' : 'border-primary-border focus:ring-primary'} rounded-[4px] appearance-none focus:outline-none focus:ring-2 focus:border-transparent peer`}
+                className={`w-full px-4 py-3.5 text-sm bg-[#f8fafc] border rounded-xl outline-none ${nameError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[#e2e8f0] focus:border-[#5b58ff] focus:ring-4 focus:ring-[#eef2ff]'}`}
                 placeholder=" "
               />
-              <label
-                htmlFor="edit_filler_name"
-                className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-primary-surface px-2 peer-focus:px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 left-3 pointer-events-none
-                  ${nameError ? 'text-[#BA1A1A] peer-focus:text-[#BA1A1A]' : 'text-[#49454F] peer-focus:text-primary'}`}
-              >
-                您的姓名
-              </label>
+              <label htmlFor="edit_filler_name" className="absolute left-3 -top-2 px-1 text-xs bg-white text-[#64748b]">您的姓名</label>
             </div>
             {nameError && (
-              <span className="text-xs text-[#BA1A1A] ml-1 block">請填寫姓名</span>
+              <span className="text-xs text-[#dc2626] ml-1 block">請填寫姓名</span>
             )}
           </div>
 
           {/* Add Meal */}
-          <div className="bg-primary-container p-4 rounded-2xl space-y-4">
-            <h3 className="text-sm font-medium text-[#49454F]">新增餐點</h3>
+          <div className="bg-[#f8fafc] p-4 rounded-2xl space-y-4 border border-[#e2e8f0]">
+            <h3 className="text-sm font-medium text-[#64748b]">新增餐點</h3>
             <div className="space-y-1">
               <div className="relative">
                 <select
@@ -655,15 +681,15 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
                     if (e.target.value) setMealError(false);
                   }}
                   disabled={meals.length === 0}
-                  className={`block w-full px-4 py-3 text-base text-[#1D1B20] bg-transparent border ${mealError ? 'border-[#BA1A1A] focus:ring-[#BA1A1A]' : 'border-primary-border focus:ring-primary'} rounded-[4px] appearance-none focus:outline-none focus:ring-2 focus:border-transparent disabled:opacity-50 font-mono`}
+                  className={`w-full px-4 py-3 text-sm bg-white border rounded-xl outline-none appearance-none disabled:opacity-50 font-mono ${mealError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[#e2e8f0] focus:border-[#5b58ff] focus:ring-4 focus:ring-[#eef2ff]'}`}
                 >
                   {meals.length === 0 ? (
-                    <option className="bg-primary-surface font-sans">載入選單中...</option>
+                    <option className="font-sans">載入選單中...</option>
                   ) : (
                     <>
-                      <option value="" disabled className="bg-primary-surface font-sans">請選擇餐點</option>
+                      <option value="" disabled className="font-sans">請選擇餐點</option>
                       {meals.map(meal => (
-                        <option key={meal.id} value={meal.id} className="bg-primary-surface">
+                        <option key={meal.id} value={meal.id}>
                           {padMealName(meal.name)} ${String(meal.price).padStart(3, '\u00A0')}
                         </option>
                       ))}
@@ -672,33 +698,32 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
                 </select>
                 <label
                   htmlFor="edit_meal_sel"
-                  className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-primary-surface px-2 left-3 pointer-events-none
-                    ${mealError ? 'text-[#BA1A1A]' : 'text-primary'}`}
+                  className={`absolute left-3 -top-2 px-1 text-xs bg-[#f8fafc] pointer-events-none ${mealError ? 'text-[#dc2626]' : 'text-[#64748b]'}`}
                 >
                   選擇餐點
                 </label>
-                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#49454F]">
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#64748b]">
                   <ChevronDown size={20} />
                 </div>
               </div>
               {mealError && (
-                <span className="text-xs text-[#BA1A1A] ml-1 block">請選擇餐點</span>
+                <span className="text-xs text-[#dc2626] ml-1 block">請選擇餐點</span>
               )}
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center bg-primary-stepper rounded-full">
+              <div className="flex items-center bg-white border border-[#e2e8f0] rounded-xl p-1">
                 <button
                   onClick={() => currentQuantity > 1 && setCurrentQuantity(q => q - 1)}
                   disabled={currentQuantity <= 1}
-                  className="p-1.5 rounded-full text-[#1D1B20] hover:bg-black/5 disabled:opacity-50 transition-colors"
+                  className="w-8 h-8 rounded-lg text-[#1e293b] hover:bg-[#f1f5f9] disabled:opacity-50 transition-colors"
                 >
                   <Minus size={18} />
                 </button>
-                <span className="text-lg w-10 text-center font-normal text-[#1D1B20]">{currentQuantity}</span>
+                <span className="text-lg w-10 text-center font-semibold text-[#1e293b]">{currentQuantity}</span>
                 <button
                   onClick={() => setCurrentQuantity(q => q + 1)}
-                  className="p-1.5 rounded-full text-[#1D1B20] hover:bg-black/5 transition-colors"
+                  className="w-8 h-8 rounded-lg text-[#1e293b] hover:bg-[#f1f5f9] transition-colors"
                 >
                   <Plus size={18} />
                 </button>
@@ -706,7 +731,7 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
               <button
                 onClick={handleAdd}
                 disabled={isSaving}
-                className="relative z-10 bg-primary-variant text-white rounded-full px-5 py-2 text-sm font-medium hover:brightness-110 active:scale-95 active:opacity-80 transition-all disabled:opacity-50"
+                className="relative z-10 bg-[#eef2ff] text-[#5b58ff] rounded-xl px-5 py-2 text-sm font-semibold hover:bg-[#e0e7ff] transition-all disabled:opacity-50"
               >
                 加入
               </button>
@@ -715,19 +740,19 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
 
           {/* Draft List */}
           <div>
-            <h3 className="text-sm font-medium text-[#49454F] mb-3">已選餐點：</h3>
+            <h3 className="text-sm font-medium text-[#64748b] mb-3">已選餐點：</h3>
             <div className="space-y-2">
               {draftList.map(item => (
-                <div key={item.id} className="flex justify-between items-center bg-primary-container-low p-3 rounded-xl border border-outline-variant">
+                <div key={item.id} className="flex justify-between items-center bg-[#f8fafc] p-3 rounded-xl border border-[#e2e8f0]">
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-[#1D1B20]">{item.meal.name}</span>
-                    <span className="text-xs text-[#49454F]">${item.meal.price} × {item.quantity}</span>
+                    <span className="text-sm font-medium text-[#1e293b]">{item.meal.name}</span>
+                    <span className="text-xs text-[#64748b]">${item.meal.price} × {item.quantity}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-[#1D1B20]">${item.subtotal}</span>
+                    <span className="text-sm font-medium text-[#1e293b]">${item.subtotal}</span>
                     <button
                       onClick={() => handleRemove(item.id)}
-                      className="p-1.5 rounded-full text-[#BA1A1A] hover:bg-[#BA1A1A]/8 transition-colors"
+                      className="p-1.5 rounded-full text-[#dc2626] hover:bg-[#fee2e2] transition-colors"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -738,19 +763,19 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
           </div>
         </div>
 
-        <div className="p-6 pt-4 border-t border-outline-variant flex justify-between items-center bg-primary-surface rounded-b-[28px]">
-          <span className="text-base font-medium text-[#1D1B20]">總計: <span className="text-primary font-bold">${totalPrice}</span></span>
+        <div className="p-6 pt-4 border-t border-[#e2e8f0] flex justify-between items-center bg-white rounded-b-[20px]">
+          <span className="text-base font-medium text-[#1e293b]">總計: <span className="text-[#5b58ff] font-bold">${totalPrice}</span></span>
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="px-6 py-2.5 rounded-full text-primary font-medium hover:bg-primary/8 transition-colors"
+              className="px-6 py-2.5 rounded-xl text-[#5b58ff] font-semibold hover:bg-[#eef2ff] transition-colors"
             >
               取消
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="relative z-10 px-6 py-2.5 rounded-full bg-primary text-white font-medium hover:brightness-110 active:scale-95 active:opacity-80 transition-all disabled:bg-gray-300 disabled:text-gray-500 flex items-center gap-2"
+              className="relative z-10 px-6 py-2.5 rounded-xl bg-[#5b58ff] text-white font-semibold hover:brightness-110 transition-all disabled:bg-gray-300 disabled:text-gray-500 flex items-center gap-2"
             >
               {isSaving ? (
                 <>

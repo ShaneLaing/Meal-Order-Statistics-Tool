@@ -1,21 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
 @import "tailwindcss";
 
+:root {
+    --primary-color: #5b58ff;
+    --primary-light: #eef2ff;
+    --bg-color: #f4f7fe;
+    --card-bg: #ffffff;
+    --text-dark: #1e293b;
+    --text-gray: #64748b;
+    --border-color: #e2e8f0;
+    --success: #10b981;
+    --success-light: #d1fae5;
+}
+
+body {
+    font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-dark);
+}
+
 @theme {
-    --color-primary: #6750A4;
-    --color-primary-variant: #625B71;
-    --color-primary-container: #F3EDF7;
-    --color-primary-container-low: #F7F2FA;
-    --color-primary-surface: #FEF7FF;
-    --color-primary-stepper: #E8DEF8;
-    --color-primary-border: #79747E;
+    --color-primary: #5b58ff;
+    --color-primary-variant: #5b58ff;
+    --color-primary-container: #eef2ff;
+    --color-primary-container-low: #f8faff;
+    --color-primary-surface: #ffffff;
+    --color-primary-stepper: #eef2ff;
+    --color-primary-border: #e2e8f0;
 
-    --color-secondary: #386A20;
-    --color-secondary-variant: #53634F;
-    --color-secondary-container: #F0F4E9;
-    --color-secondary-container-low: #FDFDF5;
-    --color-secondary-surface: #F0FDF4;
-    --color-secondary-stepper: #D6E8CE;
-    --color-secondary-border: #73796E;
+    --color-secondary: #10b981;
+    --color-secondary-variant: #10b981;
+    --color-secondary-container: #d1fae5;
+    --color-secondary-container-low: #f0fdf4;
+    --color-secondary-surface: #ffffff;
+    --color-secondary-stepper: #d1fae5;
+    --color-secondary-border: #e2e8f0;
 
-    --color-outline-variant: #CAC4D0;
+    --color-outline-variant: #e2e8f0;
 }

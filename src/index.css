@@ -28,22 +28,3 @@ body {
     color: var(--text-dark);
 }
 
-@theme {
-    --color-primary: var(--swatch-3);
-    --color-primary-variant: var(--swatch-4);
-    --color-primary-container: var(--swatch-2);
-    --color-primary-container-low: var(--swatch-1);
-    --color-primary-surface: var(--card-bg);
-    --color-primary-stepper: var(--swatch-2);
-    --color-primary-border: var(--border-color);
-
-    --color-secondary: var(--swatch-2);
-    --color-secondary-variant: var(--swatch-1);
-    --color-secondary-container: var(--swatch-1);
-    --color-secondary-container-low: var(--card-bg);
-    --color-secondary-surface: var(--card-bg);
-    --color-secondary-stepper: var(--swatch-2);
-    --color-secondary-border: var(--border-color);
-
-    --color-outline-variant: var(--border-color);
-}

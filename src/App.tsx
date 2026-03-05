@@ -298,26 +298,26 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f7fe] text-[#1e293b]">
+    <div className="min-h-screen bg-[var(--bg-color)] text-[var(--text-dark)]">
       <main className="min-h-screen overflow-y-auto">
-        <header className="h-20 px-4 md:px-10 flex items-center justify-between sticky top-0 z-10 bg-[#f4f7fe]/90 backdrop-blur">
+        <header className="h-20 px-4 md:px-10 flex items-center justify-between sticky top-0 z-10 bg-[var(--bg-color)] backdrop-blur">
           <h1 className="text-xl md:text-2xl font-bold">訂餐統計系統</h1>
         </header>
 
         <div className="px-4 md:px-10 pb-10 pt-4 md:pt-6 space-y-6">
-          <section className="rounded-[20px] p-5 md:p-8 bg-[linear-gradient(135deg,#f0f3ff_0%,#e0e8ff_100%)] shadow-[0_4px_15px_rgba(91,88,255,0.05)] flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <section className="rounded-[20px] p-5 md:p-8 bg-[linear-gradient(135deg,var(--primary-light)_0%,var(--card-bg)_100%)] shadow-[0_4px_15px_rgba(101,113,102,0.12)] flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-sm md:text-base text-[#64748b] font-medium mb-1">今日訂餐總計 (Sales Distribution)</h2>
-              <div className="text-3xl md:text-4xl font-bold text-[#1e293b]">${grandTotalPrice.toFixed(2)}</div>
+              <h2 className="text-sm md:text-base text-[var(--text-gray)] font-medium mb-1">今日訂餐總計 (Sales Distribution)</h2>
+              <div className="text-3xl md:text-4xl font-bold text-[var(--text-dark)]">${grandTotalPrice.toFixed(2)}</div>
             </div>
             <div className="flex gap-3 items-stretch">
-              <div className="bg-white/80 backdrop-blur rounded-2xl px-4 py-3 min-w-[120px]">
-                <span className="text-xs text-[#64748b]">總訂單數</span>
-                <h3 className="text-xl font-bold text-[#1e293b] mt-1">{allUsersOrders.length} 筆</h3>
+              <div className="bg-[var(--card-bg)]/90 backdrop-blur rounded-2xl px-4 py-3 min-w-[120px] border border-[var(--border-color)]">
+                <span className="text-xs text-[var(--text-gray)]">總訂單數</span>
+                <h3 className="text-xl font-bold text-[var(--text-dark)] mt-1">{allUsersOrders.length} 筆</h3>
               </div>
               <button
                 onClick={() => setIsExportVisible(v => !v)}
-                className="rounded-2xl px-4 py-3 min-w-[120px] bg-[#5b58ff] text-white font-semibold text-sm shadow-[0_4px_12px_rgba(91,88,255,0.3)] hover:brightness-110 transition-all"
+                className="rounded-2xl px-4 py-3 min-w-[120px] bg-[var(--primary-color)] text-[var(--text-dark)] font-semibold text-sm shadow-[0_4px_12px_rgba(101,113,102,0.22)] hover:brightness-105 transition-all"
               >
                 匯出訂單
               </button>
@@ -325,81 +325,81 @@ export default function App() {
           </section>
 
           {isExportVisible && (
-            <section className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#e2e8f0]">
-              <h3 className="text-base font-semibold mb-3 text-[#1e293b]">LINE text block</h3>
+            <section className="bg-[var(--card-bg)] rounded-[20px] p-5 md:p-6 shadow-[0_4px_20px_rgba(101,113,102,0.12)] border border-[var(--border-color)]">
+              <h3 className="text-base font-semibold mb-3 text-[var(--text-dark)]">LINE text block</h3>
               <textarea
                 readOnly
                 value={lineExportText}
-                className="w-full min-h-[180px] rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-3 text-sm text-[#334155] outline-none"
+                className="w-full min-h-[180px] rounded-xl border border-[var(--border-color)] bg-[var(--primary-light)] p-3 text-sm text-[var(--text-dark)] outline-none"
               />
             </section>
           )}
 
           <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6 items-start">
-            <section className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+            <section className="bg-[var(--card-bg)] rounded-[20px] p-5 md:p-6 shadow-[0_4px_20px_rgba(101,113,102,0.12)]">
               <div className="flex justify-between items-center mb-5">
                 <h2 className="text-lg font-semibold">所有人的訂單們</h2>
                 <button
-                  className="p-2 rounded-full text-[#64748b] hover:bg-[#eef2ff] hover:text-[#5b58ff] transition-colors"
+                  className="p-2 rounded-full text-[var(--text-gray)] hover:bg-[var(--primary-light)] hover:text-[var(--text-dark)] transition-colors"
                   onClick={() => setIsGlobalListExpanded(!isGlobalListExpanded)}
                 >
                   {isGlobalListExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </button>
               </div>
 
-              <div className="w-full mb-5 bg-[#f8fafc] px-4 py-2.5 rounded-full border border-[#e2e8f0] flex items-center gap-2">
-                <ChevronDown size={16} className="text-[#64748b] -rotate-90" />
+              <div className="w-full mb-5 bg-[var(--primary-light)] px-4 py-2.5 rounded-full border border-[var(--border-color)] flex items-center gap-2">
+                <ChevronDown size={16} className="text-[var(--text-gray)] -rotate-90" />
                 <input
                   type="text"
                   value={orderSearchKeyword}
                   onChange={(e) => setOrderSearchKeyword(e.target.value)}
                   placeholder="搜尋訂單或姓名..."
-                  className="w-full bg-transparent outline-none text-sm text-[#1e293b] placeholder:text-[#94a3b8]"
+                  className="w-full bg-transparent outline-none text-sm text-[var(--text-dark)] placeholder:text-[var(--text-gray)]"
                 />
               </div>
 
               {isGlobalListExpanded && (
                 <div className="space-y-4 max-h-[640px] overflow-y-auto pr-1">
                   {isLoadingMenu ? (
-                    <div className="p-5 text-center rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] text-[#64748b] flex flex-col items-center gap-2">
-                      <LoadingSpinner size={20} className="text-[#5b58ff]" />
+                    <div className="p-5 text-center rounded-2xl border border-[var(--border-color)] bg-[var(--primary-light)] text-[var(--text-gray)] flex flex-col items-center gap-2">
+                      <LoadingSpinner size={20} className="text-[var(--primary-color)]" />
                       <span>正在同步雲端資料...</span>
                     </div>
                   ) : filteredOrders.length === 0 ? (
-                    <div className="p-5 text-center rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] text-[#64748b] italic">
+                    <div className="p-5 text-center rounded-2xl border border-[var(--border-color)] bg-[var(--primary-light)] text-[var(--text-gray)] italic">
                       {orderSearchKeyword.trim() ? '找不到符合的姓名' : '目前還沒有人點餐喔！'}
                     </div>
                   ) : (
                     filteredOrders.map(order => (
-                      <div key={order.id} className={`relative rounded-2xl border border-[#e2e8f0] p-4 transition-all hover:border-[#5b58ff] hover:shadow-[0_4px_12px_rgba(91,88,255,0.08)] ${deletingId === order.id ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <div key={order.id} className={`relative rounded-2xl border border-[var(--border-color)] p-4 transition-all hover:border-[var(--primary-color)] hover:shadow-[0_4px_12px_rgba(101,113,102,0.18)] ${deletingId === order.id ? 'opacity-50 pointer-events-none' : ''}`}>
                         {deletingId === order.id && (
                           <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-white/70 z-20">
                             <div className="flex flex-col items-center gap-2">
-                              <LoadingSpinner size={22} className="text-[#5b58ff]" />
-                              <span className="text-xs font-medium text-[#5b58ff]">同步刪除中...</span>
+                              <LoadingSpinner size={22} className="text-[var(--primary-color)]" />
+                              <span className="text-xs font-medium text-[var(--text-dark)]">同步刪除中...</span>
                             </div>
                           </div>
                         )}
 
-                        <div className="flex justify-between items-start mb-3 pb-3 border-b border-dashed border-[#e2e8f0]">
+                        <div className="flex justify-between items-start mb-3 pb-3 border-b border-dashed border-[var(--border-color)]">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#eef2ff] text-[#5b58ff] flex items-center justify-center text-sm font-semibold">
+                            <div className="w-8 h-8 rounded-full bg-[var(--primary-light)] text-[var(--text-dark)] flex items-center justify-center text-sm font-semibold">
                               {order.filler_name?.slice(0, 1) || '人'}
                             </div>
-                            <span className="font-semibold text-[#1e293b]">{order.filler_name}</span>
-                            <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#d1fae5] text-[#10b981]">${order.total_price}</span>
+                            <span className="font-semibold text-[var(--text-dark)]">{order.filler_name}</span>
+                            <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--success-light)] text-[var(--success)]">${order.total_price}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => setEditingOrder(order)}
-                              className="p-2 rounded-full text-[#64748b] hover:bg-[#eef2ff] hover:text-[#5b58ff] transition-colors"
+                              className="p-2 rounded-full text-[var(--text-gray)] hover:bg-[var(--primary-light)] hover:text-[var(--text-dark)] transition-colors"
                               aria-label="編輯訂單"
                             >
                               <Edit size={16} />
                             </button>
                             <button
                               onClick={() => handleDeleteOrder(order.id)}
-                              className="p-2 rounded-full text-[#64748b] hover:bg-[#fee2e2] hover:text-[#dc2626] transition-colors"
+                              className="p-2 rounded-full text-[var(--text-gray)] hover:bg-[#fee2e2] hover:text-[#dc2626] transition-colors"
                               aria-label="刪除訂單"
                             >
                               <Trash2 size={16} />
@@ -410,13 +410,13 @@ export default function App() {
                         <div className="space-y-1">
                           {order.items.length > 0 ? (
                             order.items.map(item => (
-                              <div key={item.id} className="text-sm text-[#64748b] flex justify-between">
+                              <div key={item.id} className="text-sm text-[var(--text-gray)] flex justify-between">
                                 <span>{item.meal.name} × {item.quantity}</span>
                                 <span>${item.subtotal}</span>
                               </div>
                             ))
                           ) : (
-                            <div className="text-sm text-[#64748b] whitespace-pre-wrap">
+                            <div className="text-sm text-[var(--text-gray)] whitespace-pre-wrap">
                               {/* @ts-ignore */}
                               {order._summary || '無餐點明細'}
                             </div>
@@ -429,14 +429,14 @@ export default function App() {
               )}
             </section>
 
-            <section className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+            <section className="bg-[var(--card-bg)] rounded-[20px] p-5 md:p-6 shadow-[0_4px_20px_rgba(101,113,102,0.12)]">
               <div className="mb-5">
                 <h2 className="text-lg font-semibold">新增個人訂單</h2>
               </div>
 
               <div className="space-y-5">
                 <div>
-                  <label htmlFor="filler_name" className="block text-sm font-medium text-[#64748b] mb-2">您的姓名</label>
+                  <label htmlFor="filler_name" className="block text-sm font-medium text-[var(--text-gray)] mb-2">您的姓名</label>
                   <input
                     type="text"
                     id="filler_name"
@@ -445,14 +445,14 @@ export default function App() {
                       setFillerName(e.target.value);
                       if (e.target.value.trim()) setFillerNameError(false);
                     }}
-                    className={`w-full px-4 py-3.5 rounded-xl border text-sm bg-[#f8fafc] outline-none transition-all ${fillerNameError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[#e2e8f0] focus:border-[#5b58ff] focus:ring-4 focus:ring-[#eef2ff]'}`}
+                    className={`w-full px-4 py-3.5 rounded-xl border text-sm bg-[var(--primary-light)] outline-none transition-all ${fillerNameError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[var(--border-color)] focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--primary-light)]'}`}
                     placeholder="請輸入姓名"
                   />
                   {fillerNameError && <span className="text-xs text-[#dc2626] mt-1 block">請填寫姓名</span>}
                 </div>
 
                 <div>
-                  <label htmlFor="meal_selector" className="block text-sm font-medium text-[#64748b] mb-2">選擇餐點</label>
+                  <label htmlFor="meal_selector" className="block text-sm font-medium text-[var(--text-gray)] mb-2">選擇餐點</label>
                   <div className="relative">
                     <select
                       id="meal_selector"
@@ -462,7 +462,7 @@ export default function App() {
                         if (e.target.value) setSelectedMealError(false);
                       }}
                       disabled={isLoadingMenu}
-                      className={`w-full px-4 py-3.5 rounded-xl border text-sm bg-[#f8fafc] outline-none transition-all appearance-none font-mono disabled:opacity-60 ${selectedMealError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[#e2e8f0] focus:border-[#5b58ff] focus:ring-4 focus:ring-[#eef2ff]'}`}
+                      className={`w-full px-4 py-3.5 rounded-xl border text-sm bg-[var(--primary-light)] outline-none transition-all appearance-none font-mono disabled:opacity-60 ${selectedMealError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[var(--border-color)] focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--primary-light)]'}`}
                     >
                       {isLoadingMenu ? (
                         <option className="font-sans">正在同步餐點清單...</option>
@@ -477,7 +477,7 @@ export default function App() {
                         </>
                       )}
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748b] pointer-events-none">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-gray)] pointer-events-none">
                       <ChevronDown size={18} />
                     </div>
                   </div>
@@ -485,19 +485,19 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-[#64748b] mb-2">數量</label>
-                  <div className="inline-flex items-center bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-1">
+                  <label className="block text-sm font-medium text-[var(--text-gray)] mb-2">數量</label>
+                  <div className="inline-flex items-center bg-[var(--primary-light)] border border-[var(--border-color)] rounded-xl p-1">
                     <button
                       onClick={() => currentQuantity > 1 && setCurrentQuantity(q => q - 1)}
                       disabled={currentQuantity <= 1}
-                      className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#1e293b] disabled:opacity-50"
+                      className="w-8 h-8 rounded-lg bg-[var(--card-bg)] flex items-center justify-center text-[var(--text-dark)] disabled:opacity-50"
                     >
                       <Minus size={16} />
                     </button>
                     <span className="w-10 text-center font-semibold">{currentQuantity}</span>
                     <button
                       onClick={() => setCurrentQuantity(q => q + 1)}
-                      className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#1e293b]"
+                      className="w-8 h-8 rounded-lg bg-[var(--card-bg)] flex items-center justify-center text-[var(--text-dark)]"
                     >
                       <Plus size={16} />
                     </button>
@@ -507,26 +507,26 @@ export default function App() {
                 <button
                   onClick={handleAddToDraft}
                   disabled={!selectedMeal || currentQuantity <= 0}
-                  className="w-full px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 bg-[#eef2ff] text-[#5b58ff] hover:bg-[#e0e7ff] transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 bg-[var(--primary-light)] text-[var(--text-dark)] hover:brightness-95 transition-colors disabled:opacity-50"
                 >
                   <Plus size={18} />
                   加入個人清單
                 </button>
 
-                <div className="pt-5 border-t border-[#e2e8f0]">
-                  <label className="block text-sm font-medium text-[#64748b] mb-3">目前已選餐點：</label>
+                <div className="pt-5 border-t border-[var(--border-color)]">
+                  <label className="block text-sm font-medium text-[var(--text-gray)] mb-3">目前已選餐點：</label>
                   <div className="space-y-2 mb-4 max-h-52 overflow-y-auto">
                     {fillerDraftList.length === 0 ? (
-                      <div className="text-[#64748b] text-sm italic text-center py-4">尚未加入任何餐點</div>
+                      <div className="text-[var(--text-gray)] text-sm italic text-center py-4">尚未加入任何餐點</div>
                     ) : (
                       fillerDraftList.map(item => (
-                        <div key={item.id} className="flex items-center justify-between p-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc]">
+                        <div key={item.id} className="flex items-center justify-between p-3 rounded-xl border border-[var(--border-color)] bg-[var(--primary-light)]">
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium text-[#1e293b]">{item.meal.name}</span>
-                            <span className="text-xs text-[#64748b]">${item.meal.price} × {item.quantity}</span>
+                            <span className="text-sm font-medium text-[var(--text-dark)]">{item.meal.name}</span>
+                            <span className="text-xs text-[var(--text-gray)]">${item.meal.price} × {item.quantity}</span>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-sm font-semibold text-[#1e293b]">${item.subtotal}</span>
+                            <span className="text-sm font-semibold text-[var(--text-dark)]">${item.subtotal}</span>
                             <button
                               onClick={() => handleRemoveFromDraft(item.id)}
                               className="p-1.5 rounded-full text-[#dc2626] hover:bg-[#fee2e2] transition-colors"
@@ -541,13 +541,13 @@ export default function App() {
 
                   <div className="flex justify-between items-center mb-5 text-lg font-bold">
                     <span>您的總價</span>
-                    <span className="text-[#5b58ff] text-2xl">${fillerTotalPrice}</span>
+                    <span className="text-[var(--primary-color)] text-2xl">${fillerTotalPrice}</span>
                   </div>
 
                   <button
                     onClick={handleSubmitOrder}
                     disabled={isSubmitting}
-                    className="w-full bg-[#5b58ff] text-white rounded-xl px-4 py-3.5 font-semibold flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(91,88,255,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(91,88,255,0.4)] transition-all disabled:bg-gray-300 disabled:shadow-none disabled:translate-y-0"
+                    className="w-full bg-[var(--primary-color)] text-[var(--text-dark)] rounded-xl px-4 py-3.5 font-semibold flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(101,113,102,0.2)] hover:-translate-y-0.5 hover:brightness-105 transition-all disabled:bg-gray-300 disabled:shadow-none disabled:translate-y-0"
                   >
                     {isSubmitting ? (
                       <>
@@ -641,9 +641,9 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-[20px] w-full max-w-md flex flex-col max-h-[90vh] shadow-[0_12px_40px_rgba(15,23,42,0.2)]">
-        <div className="p-6 pb-4 border-b border-[#e2e8f0]">
-          <h2 className="text-2xl font-semibold text-[#1e293b]">編輯訂單</h2>
+      <div className="bg-[var(--card-bg)] rounded-[20px] w-full max-w-md flex flex-col max-h-[90vh] shadow-[0_12px_40px_rgba(101,113,102,0.2)]">
+        <div className="p-6 pb-4 border-b border-[var(--border-color)]">
+          <h2 className="text-2xl font-semibold text-[var(--text-dark)]">編輯訂單</h2>
         </div>
 
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
@@ -658,10 +658,10 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
                   setName(e.target.value);
                   if (e.target.value.trim()) setNameError(false);
                 }}
-                className={`w-full px-4 py-3.5 text-sm bg-[#f8fafc] border rounded-xl outline-none ${nameError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[#e2e8f0] focus:border-[#5b58ff] focus:ring-4 focus:ring-[#eef2ff]'}`}
+                className={`w-full px-4 py-3.5 text-sm bg-[var(--primary-light)] border rounded-xl outline-none ${nameError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[var(--border-color)] focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--primary-light)]'}`}
                 placeholder=" "
               />
-              <label htmlFor="edit_filler_name" className="absolute left-3 -top-2 px-1 text-xs bg-white text-[#64748b]">您的姓名</label>
+              <label htmlFor="edit_filler_name" className="absolute left-3 -top-2 px-1 text-xs bg-[var(--card-bg)] text-[var(--text-gray)]">您的姓名</label>
             </div>
             {nameError && (
               <span className="text-xs text-[#dc2626] ml-1 block">請填寫姓名</span>
@@ -669,8 +669,8 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
           </div>
 
           {/* Add Meal */}
-          <div className="bg-[#f8fafc] p-4 rounded-2xl space-y-4 border border-[#e2e8f0]">
-            <h3 className="text-sm font-medium text-[#64748b]">新增餐點</h3>
+          <div className="bg-[var(--primary-light)] p-4 rounded-2xl space-y-4 border border-[var(--border-color)]">
+            <h3 className="text-sm font-medium text-[var(--text-gray)]">新增餐點</h3>
             <div className="space-y-1">
               <div className="relative">
                 <select
@@ -681,7 +681,7 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
                     if (e.target.value) setMealError(false);
                   }}
                   disabled={meals.length === 0}
-                  className={`w-full px-4 py-3 text-sm bg-white border rounded-xl outline-none appearance-none disabled:opacity-50 font-mono ${mealError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[#e2e8f0] focus:border-[#5b58ff] focus:ring-4 focus:ring-[#eef2ff]'}`}
+                  className={`w-full px-4 py-3 text-sm bg-[var(--card-bg)] border rounded-xl outline-none appearance-none disabled:opacity-50 font-mono ${mealError ? 'border-[#dc2626] focus:ring-4 focus:ring-[#fee2e2]' : 'border-[var(--border-color)] focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--primary-light)]'}`}
                 >
                   {meals.length === 0 ? (
                     <option className="font-sans">載入選單中...</option>
@@ -698,11 +698,11 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
                 </select>
                 <label
                   htmlFor="edit_meal_sel"
-                  className={`absolute left-3 -top-2 px-1 text-xs bg-[#f8fafc] pointer-events-none ${mealError ? 'text-[#dc2626]' : 'text-[#64748b]'}`}
+                  className={`absolute left-3 -top-2 px-1 text-xs bg-[var(--primary-light)] pointer-events-none ${mealError ? 'text-[#dc2626]' : 'text-[var(--text-gray)]'}`}
                 >
                   選擇餐點
                 </label>
-                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#64748b]">
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[var(--text-gray)]">
                   <ChevronDown size={20} />
                 </div>
               </div>
@@ -712,18 +712,18 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center bg-white border border-[#e2e8f0] rounded-xl p-1">
+              <div className="flex items-center bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-1">
                 <button
                   onClick={() => currentQuantity > 1 && setCurrentQuantity(q => q - 1)}
                   disabled={currentQuantity <= 1}
-                  className="w-8 h-8 rounded-lg text-[#1e293b] hover:bg-[#f1f5f9] disabled:opacity-50 transition-colors"
+                  className="w-8 h-8 rounded-lg text-[var(--text-dark)] hover:bg-[var(--primary-light)] disabled:opacity-50 transition-colors"
                 >
                   <Minus size={18} />
                 </button>
-                <span className="text-lg w-10 text-center font-semibold text-[#1e293b]">{currentQuantity}</span>
+                <span className="text-lg w-10 text-center font-semibold text-[var(--text-dark)]">{currentQuantity}</span>
                 <button
                   onClick={() => setCurrentQuantity(q => q + 1)}
-                  className="w-8 h-8 rounded-lg text-[#1e293b] hover:bg-[#f1f5f9] transition-colors"
+                  className="w-8 h-8 rounded-lg text-[var(--text-dark)] hover:bg-[var(--primary-light)] transition-colors"
                 >
                   <Plus size={18} />
                 </button>
@@ -731,7 +731,7 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
               <button
                 onClick={handleAdd}
                 disabled={isSaving}
-                className="relative z-10 bg-[#eef2ff] text-[#5b58ff] rounded-xl px-5 py-2 text-sm font-semibold hover:bg-[#e0e7ff] transition-all disabled:opacity-50"
+                className="relative z-10 bg-[var(--primary-color)] text-[var(--text-dark)] rounded-xl px-5 py-2 text-sm font-semibold hover:brightness-105 transition-all disabled:opacity-50"
               >
                 加入
               </button>
@@ -740,16 +740,16 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
 
           {/* Draft List */}
           <div>
-            <h3 className="text-sm font-medium text-[#64748b] mb-3">已選餐點：</h3>
+            <h3 className="text-sm font-medium text-[var(--text-gray)] mb-3">已選餐點：</h3>
             <div className="space-y-2">
               {draftList.map(item => (
-                <div key={item.id} className="flex justify-between items-center bg-[#f8fafc] p-3 rounded-xl border border-[#e2e8f0]">
+                <div key={item.id} className="flex justify-between items-center bg-[var(--primary-light)] p-3 rounded-xl border border-[var(--border-color)]">
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-[#1e293b]">{item.meal.name}</span>
-                    <span className="text-xs text-[#64748b]">${item.meal.price} × {item.quantity}</span>
+                    <span className="text-sm font-medium text-[var(--text-dark)]">{item.meal.name}</span>
+                    <span className="text-xs text-[var(--text-gray)]">${item.meal.price} × {item.quantity}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-[#1e293b]">${item.subtotal}</span>
+                    <span className="text-sm font-medium text-[var(--text-dark)]">${item.subtotal}</span>
                     <button
                       onClick={() => handleRemove(item.id)}
                       className="p-1.5 rounded-full text-[#dc2626] hover:bg-[#fee2e2] transition-colors"
@@ -763,19 +763,19 @@ function EditDialog({ order, meals, onClose, onSave, isSaving }: { order: UserOr
           </div>
         </div>
 
-        <div className="p-6 pt-4 border-t border-[#e2e8f0] flex justify-between items-center bg-white rounded-b-[20px]">
-          <span className="text-base font-medium text-[#1e293b]">總計: <span className="text-[#5b58ff] font-bold">${totalPrice}</span></span>
+        <div className="p-6 pt-4 border-t border-[var(--border-color)] flex justify-between items-center bg-[var(--card-bg)] rounded-b-[20px]">
+          <span className="text-base font-medium text-[var(--text-dark)]">總計: <span className="text-[var(--primary-color)] font-bold">${totalPrice}</span></span>
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="px-6 py-2.5 rounded-xl text-[#5b58ff] font-semibold hover:bg-[#eef2ff] transition-colors"
+              className="px-6 py-2.5 rounded-xl text-[var(--text-dark)] font-semibold hover:bg-[var(--primary-light)] transition-colors"
             >
               取消
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="relative z-10 px-6 py-2.5 rounded-xl bg-[#5b58ff] text-white font-semibold hover:brightness-110 transition-all disabled:bg-gray-300 disabled:text-gray-500 flex items-center gap-2"
+              className="relative z-10 px-6 py-2.5 rounded-xl bg-[var(--primary-color)] text-[var(--text-dark)] font-semibold hover:brightness-110 transition-all disabled:bg-gray-300 disabled:text-gray-500 flex items-center gap-2"
             >
               {isSaving ? (
                 <>

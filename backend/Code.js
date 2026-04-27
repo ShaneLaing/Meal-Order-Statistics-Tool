@@ -1,101 +1,153 @@
 // backend/Code.js
-
+//
 // 部署為網路應用程式 (Deploy as Web App) 的設定：
 // 1. 執行身分: 我 (Me)
 // 2. 存取權限: 所有人 (Anyone)
+//
+// 工作表 (Sheets) schema — 嚴格沿用既有設計：
+//
+// 1. Menu          A=餐點名稱, B=餐點價錢                                  (header at row 1)
+//                  -> 名稱 (name) 為唯一鍵，無獨立 id 欄。
+//
+// 2. OrdersSummary A=訂單時間, B=訂單姓名, C=餐點名稱,
+//                  D=餐點數量, E=餐點價錢(小計), F=訂單總計             (header at row 1)
+//                  -> 一筆訂單 = (filler_name, timestamp) 複合鍵；多餐點則同 key 多列。
+//
+// 3. Config        A=截止時間, B=Date 物件 (例: 2026/4/30 15:00:00)
+//                  -> 使用 substring 匹配 "截止時間" 找 deadline。
 
-const SPREADSHEET_ID = '1t_EUafkwqdeQRr6rpxHs1MLVeAzjmk58uFxMc5qEIuw'; // <-- 請將此替換為您的 Google 試算表 ID
+const SPREADSHEET_ID = '1t_EUafkwqdeQRr6rpxHs1MLVeAzjmk58uFxMc5qEIuw';
 
-// 定義試算表的工作表名稱
 const MENU_SHEET_NAME = 'Menu';
 const SUMMARY_SHEET_NAME = 'OrdersSummary';
+const CONFIG_SHEET_NAME = 'Config';
 
-/**
- * 處理 GET 請求
- */
+const HEADER_ROW_COUNT = 1;
+
+// OrdersSummary 欄位索引
+const O_COL = {
+  TIMESTAMP: 0,
+  FILLER: 1,
+  MEAL: 2,
+  QTY: 3,
+  SUBTOTAL: 4,
+  TOTAL: 5
+};
+
+// Menu 欄位索引
+const M_COL = {
+  NAME: 0,
+  PRICE: 1
+};
+
+/* ------------------------------------------------------------------ */
+/* Routing                                                              */
+/* ------------------------------------------------------------------ */
+
 function doGet(e) {
   try {
-    const action = e.parameter.action || 'getMenu';
+    const action = (e && e.parameter && e.parameter.action) || 'getMenu';
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-
-    if (action === 'getOrders') {
-      return respond({ success: true, orders: getOrdersData(ss) });
-    }
 
     if (action === 'init') {
       return respond({
         success: true,
         items: getMenuData(ss),
-        orders: getOrdersData(ss)
+        orders: getOrdersData(ss),
+        settings: getSettings(ss)
       });
     }
-
-    // --- 預設為 getMenu ---
+    if (action === 'getOrders')   return respond({ success: true, orders: getOrdersData(ss) });
+    if (action === 'getSettings') return respond({ success: true, settings: getSettings(ss) });
     return respond({ success: true, items: getMenuData(ss) });
 
   } catch (err) {
-    return respond({ success: false, error: "Backend Error: " + err.message });
+    return respond({ success: false, error: 'Backend Error: ' + err.message });
   }
 }
 
-/**
- * 取得餐點清單資料
- */
+function doPost(e) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const payload = JSON.parse(e.postData.contents);
+
+    // 向後相容: 舊版 { delete: true } -> deleteOrder
+    let action = payload.action;
+    if (!action) action = payload.delete === true ? 'deleteOrder' : 'upsertOrder';
+
+    if (action === 'upsertOrder') return upsertOrder(ss, payload);
+    if (action === 'deleteOrder') return deleteOrder(ss, payload);
+    if (action === 'upsertMenu')  return upsertMenu(ss, payload);
+    if (action === 'deleteMenu')  return deleteMenu(ss, payload);
+
+    return respond({ success: false, error: 'Unknown action: ' + action });
+  } catch (err) {
+    return respond({ success: false, error: err.message });
+  }
+}
+
+function doOptions(e) {
+  return respond({ success: true });
+}
+
+/* ------------------------------------------------------------------ */
+/* Reads                                                                */
+/* ------------------------------------------------------------------ */
+
 function getMenuData(ss) {
-  const HEADER_ROW_COUNT = 1;
   const sheet = ss.getSheetByName(MENU_SHEET_NAME);
   if (!sheet) return [];
-
   const data = sheet.getDataRange().getValues();
   const items = [];
   for (let i = HEADER_ROW_COUNT; i < data.length; i++) {
     const row = data[i];
-    if (row[1]) { // B 欄為餐點名稱
+    if (row[M_COL.NAME]) {
       items.push({
-        id: String(row[0]),
-        name: String(row[1]),
-        price: Number(row[2])
+        name: String(row[M_COL.NAME]),
+        price: Number(row[M_COL.PRICE]) || 0
       });
     }
   }
   return items;
 }
 
-/**
- * 取得訂單資料
- */
 function getOrdersData(ss) {
-  const HEADER_ROW_COUNT = 1;
   const sheet = ss.getSheetByName(SUMMARY_SHEET_NAME);
   if (!sheet) return [];
-
   const data = sheet.getDataRange().getValues();
   const orderMap = {};
 
   for (let i = HEADER_ROW_COUNT; i < data.length; i++) {
     const row = data[i];
-    const orderId = String(row[0]);
-    if (!orderId) continue;
+    const tsValue = row[O_COL.TIMESTAMP];
+    if (!tsValue) continue;
+    const timestamp = tsValue instanceof Date ? tsValue.toISOString() : String(tsValue);
+    const fillerName = String(row[O_COL.FILLER]);
+    const key = fillerName + '|' + timestamp;
 
-    if (!orderMap[orderId]) {
-      orderMap[orderId] = {
-        id: orderId,
-        timestamp: row[1],
-        filler_name: String(row[2]),
-        total_price: Number(row[6]), // G 欄 (Index 6)
+    if (!orderMap[key]) {
+      orderMap[key] = {
+        timestamp: timestamp,
+        filler_name: fillerName,
+        total_price: Number(row[O_COL.TOTAL]) || 0,
         items: [],
         items_summary_parts: []
       };
-      // 嘗試解析原始 JSON
-      if (row[7]) {
-        try {
-          orderMap[orderId].items = JSON.parse(String(row[7]));
-        } catch (e) { }
-      }
     }
-    // 收集品項摘要 (D, E 欄位)
-    if (row[3]) {
-      orderMap[orderId].items_summary_parts.push(String(row[3]) + " × " + String(row[4]));
+
+    if (row[O_COL.MEAL] && row[O_COL.QTY] && row[O_COL.SUBTOTAL]) {
+      const quantity = Number(row[O_COL.QTY]) || 0;
+      const subtotal = Number(row[O_COL.SUBTOTAL]) || 0;
+      const unitPrice = quantity > 0 ? subtotal / quantity : 0;
+      orderMap[key].items.push({
+        id: 'item-' + i,
+        meal: { name: String(row[O_COL.MEAL]), price: unitPrice },
+        quantity: quantity,
+        subtotal: subtotal
+      });
+      orderMap[key].items_summary_parts.push(
+        String(row[O_COL.MEAL]) + ' × ' + String(row[O_COL.QTY])
+      );
     }
   }
 
@@ -106,69 +158,228 @@ function getOrdersData(ss) {
   });
 }
 
-/**
- * 處理 POST 請求 (提交、更新或刪除訂單)
- */
-function doPost(e) {
+function getSettings(ss) {
+  const out = { deadline: null };
   try {
-    const payload = JSON.parse(e.postData.contents);
-    const order_id = payload.id;
-
-    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SUMMARY_SHEET_NAME);
-    if (!sheet) return respond({ success: false, error: "OrdersSummary sheet not found" });
-
-    // 1. 先刪除所有具有相同 order_id 的舊列 (如果是編輯更新或直接刪除)
-    const data = sheet.getDataRange().getValues();
-    for (let i = data.length - 1; i >= 0; i--) {
-      if (String(data[i][0]) === String(order_id)) {
-        sheet.deleteRow(i + 1);
+    const sheet = ss.getSheetByName(CONFIG_SHEET_NAME);
+    if (!sheet) return out;
+    const data = sheet.getRange('A:B').getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0] || '').indexOf('截止時間') !== -1) {
+        const v = data[i][1];
+        if (v instanceof Date) {
+          out.deadline = Utilities.formatDate(
+            v, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss'
+          );
+        } else if (v) {
+          out.deadline = String(v);
+        }
+        break;
       }
     }
+  } catch (e) {}
+  return out;
+}
 
-    // 2. 如果 payload 中包含 delete: true，則直接結束 (已完成刪除)
-    if (payload.delete === true) {
-      return respond({ success: true, message: "Order deleted!" });
+/* ------------------------------------------------------------------ */
+/* Deadline 檢查                                                        */
+/* ------------------------------------------------------------------ */
+
+function isPastDeadline(ss) {
+  try {
+    const sheet = ss.getSheetByName(CONFIG_SHEET_NAME);
+    if (!sheet) return false;
+    const data = sheet.getRange('A:B').getValues();
+    let rawDeadline = null;
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0] || '').indexOf('截止時間') !== -1) {
+        rawDeadline = data[i][1];
+        break;
+      }
     }
+    if (!rawDeadline) return false;
 
-    // 3. 逐行寫入新資料 (提交或更新)
-    const filler_name = payload.filler_name;
-    const items = payload.items;
-    const grand_total = payload.total_price;
-    const timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
-    const rawItemsJson = JSON.stringify(items);
+    const now = new Date();
+    now.setMilliseconds(0);
 
-    // 欄位: A:ID, B:時間, C:姓名, D:餐點, E:數量, F:小計, G:總計, H:RawJSON
-    items.forEach(function (item) {
-      sheet.appendRow([
-        order_id,
-        timestamp,
-        filler_name,
-        item.meal.name,
-        item.quantity,
-        item.subtotal,
-        grand_total,
-        rawItemsJson
-      ]);
-    });
-
-    return respond({ success: true, message: "OK" });
-  } catch (err) {
-    return respond({ success: false, error: err.message });
+    let deadline;
+    if (rawDeadline instanceof Date) {
+      deadline = rawDeadline;
+      // 1899/12/30：Sheet 的「純時間」會落在這個基準日，需貼回今天
+      if (deadline.getFullYear() < 1900) {
+        const t = deadline;
+        deadline = new Date(now.getTime());
+        deadline.setHours(t.getHours(), t.getMinutes(), t.getSeconds(), 0);
+      }
+    } else {
+      deadline = new Date(rawDeadline);
+      if (isNaN(deadline.getTime())) {
+        // 容錯：手動字串如「下午 6:00:00」
+        const m = String(rawDeadline).match(/(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
+        if (!m) return false;
+        deadline = new Date(now.getTime());
+        let hh = parseInt(m[1], 10);
+        const mm = parseInt(m[2], 10);
+        const ss2 = parseInt(m[3] || '0', 10);
+        if (String(rawDeadline).indexOf('下午') !== -1 && hh < 12) hh += 12;
+        if (String(rawDeadline).indexOf('上午') !== -1 && hh === 12) hh = 0;
+        deadline.setHours(hh, mm, ss2, 0);
+      }
+    }
+    deadline.setMilliseconds(0);
+    return now > deadline;
+  } catch (e) {
+    return false;
   }
 }
 
-/**
- * 處理 CORS 及回傳 JSON 格式的輔助函式
- */
-function respond(responseObj) {
-  // 將結果轉成 JSON 字串
-  return ContentService.createTextOutput(JSON.stringify(responseObj))
-    .setMimeType(ContentService.MimeType.JSON);
+/* ------------------------------------------------------------------ */
+/* Order mutations                                                      */
+/* ------------------------------------------------------------------ */
+
+function upsertOrder(ss, payload) {
+  if (isPastDeadline(ss)) {
+    return respond({ success: false, error: 'PAST_DEADLINE' });
+  }
+  const validation = validateOrderPayload(payload);
+  if (validation) return respond({ success: false, error: validation });
+
+  const sheet = ss.getSheetByName(SUMMARY_SHEET_NAME);
+  if (!sheet) return respond({ success: false, error: 'OrdersSummary sheet not found' });
+
+  // 1. 編輯模式 (有提供 prevTimestamp + prevFillerName)：先刪除舊列
+  const prevTs = payload.prevTimestamp || payload.timestamp;
+  const prevName = payload.prevFillerName || payload.filler_name;
+  if (prevTs) removeOrderRows(sheet, prevName, prevTs);
+
+  // 2. 新增 / 更新後寫入
+  const fillerName = String(payload.filler_name);
+  const items = payload.items;
+  const grandTotal = Number(payload.total_price);
+  const now = new Date();
+  now.setMilliseconds(0);
+  const responseTimestamp = now.toISOString();
+
+  items.forEach(function (item) {
+    sheet.appendRow([
+      now,                                  // A: 訂單時間 (Date)
+      fillerName,                           // B: 訂單姓名
+      String(item.meal && item.meal.name),  // C: 餐點名稱
+      Number(item.quantity),                // D: 餐點數量
+      Number(item.subtotal),                // E: 餐點價錢 (小計)
+      grandTotal                            // F: 訂單總計
+    ]);
+  });
+
+  return respond({ success: true, timestamp: responseTimestamp });
 }
 
-/**
- * 處理 OPTIONS 請求 (解決 CORS 預檢問題)
- */
-function doOptions(e) {
+function deleteOrder(ss, payload) {
+  if (isPastDeadline(ss)) {
+    return respond({ success: false, error: 'PAST_DEADLINE' });
+  }
+  if (!payload.timestamp || !payload.filler_name) {
+    return respond({ success: false, error: 'Missing timestamp or filler_name' });
+  }
+  const sheet = ss.getSheetByName(SUMMARY_SHEET_NAME);
+  if (!sheet) return respond({ success: false, error: 'OrdersSummary sheet not found' });
+
+  removeOrderRows(sheet, String(payload.filler_name), String(payload.timestamp));
   return respond({ success: true });
+}
+
+function removeOrderRows(sheet, fillerName, timestampStr) {
+  const target = new Date(timestampStr);
+  if (isNaN(target.getTime())) return;
+  const data = sheet.getDataRange().getValues();
+  for (let i = data.length - 1; i >= HEADER_ROW_COUNT; i--) {
+    const tsValue = data[i][O_COL.TIMESTAMP];
+    if (!tsValue) continue;
+    const rowDate = tsValue instanceof Date ? tsValue : new Date(tsValue);
+    if (isNaN(rowDate.getTime())) continue;
+    if (rowDate.getTime() === target.getTime() &&
+        String(data[i][O_COL.FILLER]) === fillerName) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+}
+
+function validateOrderPayload(payload) {
+  if (!payload || !payload.filler_name || !String(payload.filler_name).trim()) {
+    return 'Missing filler_name';
+  }
+  if (!Array.isArray(payload.items) || payload.items.length === 0) {
+    return 'items must be non-empty array';
+  }
+  for (let i = 0; i < payload.items.length; i++) {
+    const it = payload.items[i];
+    if (!it || !it.meal || !it.meal.name || typeof it.quantity !== 'number' || it.quantity <= 0) {
+      return 'Invalid item at index ' + i;
+    }
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Menu mutations  (key = name)                                         */
+/* ------------------------------------------------------------------ */
+
+function upsertMenu(ss, payload) {
+  if (!payload.item) return respond({ success: false, error: 'Missing item' });
+  const item = payload.item;
+  const name = String(item.name || '').trim();
+  const price = Number(item.price);
+  if (!name) return respond({ success: false, error: 'Menu name required' });
+  if (isNaN(price) || price < 0) return respond({ success: false, error: 'Menu price must be >= 0' });
+
+  const sheet = ss.getSheetByName(MENU_SHEET_NAME);
+  if (!sheet) return respond({ success: false, error: 'Menu sheet not found' });
+
+  const prevName = item.prevName ? String(item.prevName) : null;
+  const data = sheet.getDataRange().getValues();
+
+  // 改名：若 prevName 與 name 不同，移除舊列
+  if (prevName && prevName !== name) {
+    for (let i = data.length - 1; i >= HEADER_ROW_COUNT; i--) {
+      if (String(data[i][M_COL.NAME]) === prevName) {
+        sheet.deleteRow(i + 1);
+      }
+    }
+  }
+
+  // 嘗試更新同名列
+  let updated = false;
+  const fresh = sheet.getDataRange().getValues();
+  for (let i = HEADER_ROW_COUNT; i < fresh.length; i++) {
+    if (String(fresh[i][M_COL.NAME]) === name) {
+      sheet.getRange(i + 1, M_COL.PRICE + 1).setValue(price);
+      updated = true;
+      break;
+    }
+  }
+  if (!updated) sheet.appendRow([name, price]);
+
+  return respond({ success: true, item: { name: name, price: price } });
+}
+
+function deleteMenu(ss, payload) {
+  if (!payload.name) return respond({ success: false, error: 'Missing menu name' });
+  const sheet = ss.getSheetByName(MENU_SHEET_NAME);
+  if (!sheet) return respond({ success: false, error: 'Menu sheet not found' });
+  const target = String(payload.name);
+  const data = sheet.getDataRange().getValues();
+  for (let i = data.length - 1; i >= HEADER_ROW_COUNT; i--) {
+    if (String(data[i][M_COL.NAME]) === target) sheet.deleteRow(i + 1);
+  }
+  return respond({ success: true });
+}
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                              */
+/* ------------------------------------------------------------------ */
+
+function respond(responseObj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(responseObj))
+    .setMimeType(ContentService.MimeType.JSON);
 }

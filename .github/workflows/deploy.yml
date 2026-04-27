@@ -1,0 +1,70 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve Apps Script URL
+        id: resolve-url
+        env:
+          VAR_URL: ${{ vars.VITE_APP_SCRIPT_WEB_APP_URL }}
+        run: |
+          # 解析 URL 來源優先序：
+          #   1. Actions Variables (vars.VITE_APP_SCRIPT_WEB_APP_URL)
+          #   2. 已 commit 的 .env.production
+          #   3. .env.example
+          # Apps Script Web App URL 是公開端點 (Anyone access)，並非密鑰。
+          if [ -n "$VAR_URL" ]; then
+            URL="$VAR_URL"
+          elif [ -f .env.production ]; then
+            URL=$(grep -E '^VITE_APP_SCRIPT_WEB_APP_URL=' .env.production | head -n1 | sed -E 's/^[^=]+=//; s/^"//; s/"$//')
+          elif [ -f .env.example ]; then
+            URL=$(grep -E '^VITE_APP_SCRIPT_WEB_APP_URL=' .env.example | head -n1 | sed -E 's/^[^=]+=//; s/^"//; s/"$//')
+          fi
+          echo "Resolved URL: ${URL:-<empty>}"
+          echo "url=${URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        env:
+          VITE_APP_SCRIPT_WEB_APP_URL: ${{ steps.resolve-url.outputs.url }}
+        run: pnpm build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

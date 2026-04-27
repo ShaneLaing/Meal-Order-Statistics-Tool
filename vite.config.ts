@@ -1,25 +1,20 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.', '');
-  return {
-    plugins: [react(), tailwindcss()],
-    base: '/Meal-Order-Statistics-Tool/',
-    define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+// Vite automatically exposes env vars prefixed with VITE_ via import.meta.env.
+// See src/config.ts for the consumer (VITE_APP_SCRIPT_WEB_APP_URL).
+export default defineConfig(() => ({
+  plugins: [react(), tailwindcss()],
+  base: '/Meal-Order-Statistics-Tool/',
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, '.'),
     },
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, '.'),
-      },
-    },
-    server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
-      hmr: process.env.DISABLE_HMR !== 'true',
-    },
-  };
-});
+  },
+  server: {
+    // DISABLE_HMR=true 用於 AI Studio 等環境
+    hmr: process.env.DISABLE_HMR !== 'true',
+  },
+}));

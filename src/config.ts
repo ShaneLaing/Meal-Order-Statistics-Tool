@@ -4,6 +4,9 @@
 export const APP_SCRIPT_WEB_APP_URL: string =
   (import.meta.env.VITE_APP_SCRIPT_WEB_APP_URL as string | undefined) ?? '';
 
+export const BACKEND_SHEET_URL: string =
+  (import.meta.env.VITE_BACKEND_SHEET_URL as string | undefined) ?? '';
+
 export const isCloudConfigured: boolean =
   Boolean(APP_SCRIPT_WEB_APP_URL) &&
   !APP_SCRIPT_WEB_APP_URL.includes('YOUR_APP_SCRIPT');

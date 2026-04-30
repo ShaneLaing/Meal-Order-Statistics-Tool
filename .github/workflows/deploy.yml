@@ -58,6 +58,7 @@ jobs:
       - name: Build
         env:
           VITE_APP_SCRIPT_WEB_APP_URL: ${{ steps.resolve-url.outputs.url }}
+          VITE_BACKEND_SHEET_URL: ${{ vars.VITE_BACKEND_SHEET_URL }}
         run: pnpm build
 
       - uses: actions/configure-pages@v5

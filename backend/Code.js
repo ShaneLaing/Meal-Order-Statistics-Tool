@@ -79,6 +79,7 @@ function doPost(e) {
     if (action === 'deleteOrder') return deleteOrder(ss, payload);
     if (action === 'upsertMenu')  return upsertMenu(ss, payload);
     if (action === 'deleteMenu')  return deleteMenu(ss, payload);
+    if (action === 'setDeadline') return setDeadline(ss, payload);
 
     return respond({ success: false, error: 'Unknown action: ' + action });
   } catch (err) {
@@ -360,6 +361,50 @@ function upsertMenu(ss, payload) {
   if (!updated) sheet.appendRow([name, price]);
 
   return respond({ success: true, item: { name: name, price: price } });
+}
+
+/* ------------------------------------------------------------------ */
+/* Config mutations                                                     */
+/* ------------------------------------------------------------------ */
+
+// Update the deadline cell in the Config sheet.
+// payload.deadline:
+//   - ISO 8601 string (e.g. "2026-05-01T10:00:00.000Z")  -> write Date
+//   - "" / null / undefined                              -> clear the cell
+function setDeadline(ss, payload) {
+  var raw = payload && Object.prototype.hasOwnProperty.call(payload, 'deadline')
+    ? payload.deadline
+    : undefined;
+
+  var dateValue = '';
+  if (raw !== '' && raw !== null && raw !== undefined) {
+    var parsed = new Date(raw);
+    if (isNaN(parsed.getTime())) {
+      return respond({ success: false, error: 'Invalid deadline: ' + raw });
+    }
+    parsed.setMilliseconds(0);
+    dateValue = parsed;
+  }
+
+  var sheet = ss.getSheetByName(CONFIG_SHEET_NAME);
+  if (!sheet) return respond({ success: false, error: 'Config sheet not found' });
+
+  var data = sheet.getRange('A:B').getValues();
+  var foundRow = -1;
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][0] || '').indexOf('截止時間') !== -1) {
+      foundRow = i + 1; // 1-based
+      break;
+    }
+  }
+
+  if (foundRow > 0) {
+    sheet.getRange(foundRow, 2).setValue(dateValue);
+  } else {
+    sheet.appendRow(['截止時間', dateValue]);
+  }
+
+  return respond({ success: true, settings: getSettings(ss) });
 }
 
 function deleteMenu(ss, payload) {

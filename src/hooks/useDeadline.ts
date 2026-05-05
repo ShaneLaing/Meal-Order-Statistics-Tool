@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { fetchSettings } from '../api/settings';
+import { fetchSettings, setDeadline as apiSetDeadline } from '../api/settings';
 import { CloudNotConfiguredError } from '../api/client';
 import { DEADLINE_TICK_MS, isCloudConfigured } from '../config';
 import { formatRemaining } from '../lib/format';
@@ -57,7 +57,21 @@ export function useDeadline(opts: UseDeadlineOptions = {}) {
     setDeadline(new Date(Date.now() - 1000).toISOString());
   }, []);
 
-  return { ...status, refresh, markClosed };
+  const update = useCallback(async (iso: string | null): Promise<boolean> => {
+    try {
+      const next = await apiSetDeadline(iso);
+      setDeadline(next.deadline ?? null);
+      return true;
+    } catch (err) {
+      if (!(err instanceof CloudNotConfiguredError)) {
+        const msg = err instanceof Error ? err.message : String(err);
+        onErrorRef.current?.('更新截止時間失敗：' + msg);
+      }
+      return false;
+    }
+  }, []);
+
+  return { ...status, refresh, markClosed, update };
 }
 
 export type DeadlineApi = ReturnType<typeof useDeadline>;

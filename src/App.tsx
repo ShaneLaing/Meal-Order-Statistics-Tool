@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Header } from './components/Header';
+import { Sidebar, type AppPage } from './components/Sidebar';
 import { DeadlineBanner } from './components/DeadlineBanner';
 import { OrderList } from './components/OrderList';
 import { OrderForm } from './components/OrderForm';
 import { EditDialog } from './components/EditDialog';
-import { MenuAdminPanel } from './components/MenuAdminPanel';
+import { SettingsPage } from './components/SettingsPage';
 import { ToastTray } from './components/ui';
 import { useMenu } from './hooks/useMenu';
 import { useOrders } from './hooks/useOrders';
@@ -26,6 +27,7 @@ export default function App() {
   });
 
   const [editing, setEditing] = useState<UserOrder | null>(null);
+  const [page, setPage] = useState<AppPage>('order');
 
   const handleSubmit = async (draft: Omit<UserOrder, 'timestamp'>): Promise<boolean> => {
     const ok = await orders.create(draft);
@@ -50,46 +52,62 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[var(--bg-color)] text-[var(--text-dark)]">
       <Header />
-      <main className="max-w-6xl mx-auto px-4 py-4 space-y-4">
-        {!isCloudConfigured && (
-          <div className="rounded-2xl px-4 py-3 bg-amber-50 border border-amber-200 text-sm text-amber-900">
-            尚未設定 <code>VITE_APP_SCRIPT_WEB_APP_URL</code>，目前以本機模擬模式執行（資料不會持久化）。
-          </div>
-        )}
+      <div className="flex flex-col md:flex-row">
+        <Sidebar currentPage={page} onChange={setPage} />
 
-        <DeadlineBanner
-          deadline={deadline.deadline}
-          isClosed={deadline.isClosed}
-          remainingMs={deadline.remainingMs}
-          label={deadline.label}
-        />
+        <main className="flex-1 min-w-0 max-w-6xl mx-auto w-full px-4 py-4 space-y-4">
+          {!isCloudConfigured && (
+            <div className="rounded-2xl px-4 py-3 bg-amber-50 border border-amber-200 text-sm text-amber-900">
+              尚未設定 <code>VITE_APP_SCRIPT_WEB_APP_URL</code>，目前以本機模擬模式執行（資料不會持久化）。
+            </div>
+          )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-4">
-          <OrderList
-            orders={orders.orders}
-            isLoading={orders.isLoading}
-            isClosed={deadline.isClosed}
-            deletingKey={orders.deletingKey}
-            onEdit={setEditing}
-            onDelete={handleDelete}
-          />
-          <OrderForm
-            meals={menu.meals}
-            isClosed={deadline.isClosed}
-            isLoadingMenu={menu.isLoading}
-            isRefreshingMenu={menu.isRefreshing}
-            isSubmitting={orders.isSubmitting}
-            onRefreshMenu={menu.refresh}
-            onSubmit={handleSubmit}
-          />
-        </div>
+          {page === 'order' ? (
+            <>
+              <DeadlineBanner
+                deadline={deadline.deadline}
+                isClosed={deadline.isClosed}
+                remainingMs={deadline.remainingMs}
+                label={deadline.label}
+              />
 
-        <MenuAdminPanel
-          meals={menu.meals}
-          onUpsert={menu.upsert}
-          onDelete={menu.remove}
-        />
-      </main>
+              <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-4">
+                <OrderList
+                  orders={orders.orders}
+                  isLoading={orders.isLoading}
+                  isClosed={deadline.isClosed}
+                  deletingKey={orders.deletingKey}
+                  onEdit={setEditing}
+                  onDelete={handleDelete}
+                />
+                <OrderForm
+                  meals={menu.meals}
+                  isClosed={deadline.isClosed}
+                  isLoadingMenu={menu.isLoading}
+                  isRefreshingMenu={menu.isRefreshing}
+                  isSubmitting={orders.isSubmitting}
+                  onRefreshMenu={menu.refresh}
+                  onSubmit={handleSubmit}
+                />
+              </div>
+            </>
+          ) : (
+            <SettingsPage
+              meals={menu.meals}
+              onMenuUpsert={menu.upsert}
+              onMenuDelete={menu.remove}
+              deadline={{
+                deadline: deadline.deadline,
+                isClosed: deadline.isClosed,
+                remainingMs: deadline.remainingMs,
+                label: deadline.label,
+              }}
+              onDeadlineRefresh={deadline.refresh}
+              onDeadlineUpdate={deadline.update}
+            />
+          )}
+        </main>
+      </div>
 
       {editing && (
         <EditDialog
